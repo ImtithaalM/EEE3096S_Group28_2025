@@ -45,7 +45,15 @@ TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN PV */
 // TODO: Define input variables
-volatile uint32_t del = 1000; //initial delay of 1s or 1000ms
+volatile uint8_t mode = 0;       // 0 = off, 1 = mode1, 2 = mode2, 3 = sparkle
+volatile uint8_t ledIndex = 0;   // Position of LED for back/forth modes
+volatile int direction = 1;      // 1 = forward, -1 = backward
+
+uint16_t delayArr_1s = 1000 - 1;     // ARR for 1s delay
+uint16_t delayArr_05s = 500 - 1;     // ARR for 0.5s delay
+volatile uint8_t isHalfSecond = 0;   // 0 = 1s, 1 = 0.5s toggle
+
+uint32_t lastButton0Press = 0;
 
 /* USER CODE END PV */
 
@@ -92,7 +100,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // TODO: Start timer TIM16
-HAL_TIM_Base_Start_IT(&htim16);
+
+  HAL_TIM_Base_Start_IT(&htim16);
  
 
   /* USER CODE END 2 */
@@ -107,16 +116,23 @@ HAL_TIM_Base_Start_IT(&htim16);
     /* USER CODE BEGIN 3 */
 
     // TODO: Check pushbuttons to change timer delay
-    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == 0) {
-      if (del == 1000)
-      {
-      del = 500;
-      }
-      else{
-      del = 1000;
-      }
-	  __HAL_TIM_SET_AUTORELOAD(&htim16, del); // update the timer delay
-  }
+
+	  if (LL_GPIO_IsInputPinSet(Button0_GPIO_Port, Button0_Pin) == 0) {
+	      HAL_Delay(50); // debounce
+	      if (LL_GPIO_IsInputPinSet(Button0_GPIO_Port, Button0_Pin) == 0) {
+	          if (isHalfSecond) {
+	              __HAL_TIM_SET_AUTORELOAD(&htim16, delayArr_1s);
+	              isHalfSecond = 0;
+	          } else {
+	              __HAL_TIM_SET_AUTORELOAD(&htim16, delayArr_05s);
+	              isHalfSecond = 1;
+	          }
+	          while (LL_GPIO_IsInputPinSet(Button0_GPIO_Port, Button0_Pin) == 0); // wait for release
+	          HAL_Delay(50); // debounce release
+	      }
+	  }
+
+
 
     
 
@@ -331,6 +347,27 @@ void TIM16_IRQHandler(void)
 	HAL_TIM_IRQHandler(&htim16);
 
 	// TODO: Change LED pattern
+
+	// Change mode based on button input
+	if (LL_GPIO_IsInputPinSet(Button1_GPIO_Port, Button1_Pin) == 0) {
+	    mode = 1;
+	    ledIndex = 0;
+	    direction = 1;
+	}
+
+	// Clear all LEDs
+	for (int i = 0; i < 8; i++) {
+	    HAL_GPIO_WritePin(GPIOB, (1 << i), GPIO_PIN_RESET);
+	}
+
+	switch (mode) {
+	    case 1: // Mode 1: one LED back and forth
+	        HAL_GPIO_WritePin(GPIOB, (1 << ledIndex), GPIO_PIN_SET);
+	        ledIndex += direction;
+	        if (ledIndex == 7 || ledIndex == 0) direction *= -1;
+	        break;
+	}
+
 
 
 
