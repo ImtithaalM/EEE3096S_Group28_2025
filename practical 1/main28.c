@@ -47,6 +47,7 @@
 #include <stdint.h>
 
 #include "stm32f0xx.h"
+#include <lcd_stm32f0.c>
 
 /* USER CODE END Includes */
 
@@ -100,7 +101,7 @@ volatile uint8_t ledIndex = 0;
 
 volatile int directionOfPattern = 1;
 
-
+volatile uint8_t currentSpeedIndex = 0;
 /* USER CODE END PV */
 
 
@@ -116,6 +117,7 @@ static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 
 void TIM16_IRQHandler(void);
+void ourname(void);
 
 /* USER CODE END PFP */
 
@@ -138,6 +140,16 @@ void TIM16_IRQHandler(void);
  * @retval int
 
  */
+// Function to display on LCD
+void ourname(void) {
+
+init_LCD();
+lcd_command(CLEAR);
+lcd_putstring("Group 28") ;
+lcd_command(LINE_TWO);
+lcd_putstring("Practical 1 demo");
+
+}
 
 int main(void)
 
@@ -186,7 +198,7 @@ int main(void)
  MX_TIM16_Init();
 
  /* USER CODE BEGIN 2 */
-
+ ourname(); // display on LCD
 
 
  // TODO: Start timer TIM16
@@ -223,18 +235,26 @@ int main(void)
 
  // TODO: Check pushbuttons to change timer delay
 
+	 if ((LL_GPIO_IsInputPinSet(Button0_GPIO_Port, Button0_Pin)) == 0 )  // Checks current state of the input, should be LOW
+	 {
+	     if (currentSpeedIndex == 0) // uses direct memory access to the register ARR of TIM16
+	     {
+	         htim16.Instance->ARR = 500 - 1;  // Sets the delay to 0.5 seconds
+	         currentSpeedIndex = 1;
+	     }
+	     else
+	     {
+	         htim16.Instance->ARR = 1000 - 1;  // Sets the delay to 1 second
+	         currentSpeedIndex = 0;
+	     }
+	     htim16.Instance->CNT = 0;  // Reset counter so change applies immediately
 
-
-
-
-
-
-
-
-
-
-
-
+	     // Wait for button release
+	     while (!LL_GPIO_IsInputPinSet(Button0_GPIO_Port, Button0_Pin))
+	     {
+	         // do nothing, just wait
+	     }
+	 }
 
 
  /* USER CODE END 3 */
