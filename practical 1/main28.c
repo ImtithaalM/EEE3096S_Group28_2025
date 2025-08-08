@@ -256,7 +256,7 @@ int main(void)
 	     }
 	 }
 
-
+ }
  /* USER CODE END 3 */
 
 }
@@ -741,8 +741,9 @@ void TIM16_IRQHandler(void)
 
 
 	case 2: // Mode 2 inverse back/forth
-
-	for (i=0; i<8; i++){
+	int i =0;
+	for (int i = 0;  i <8; i++)
+	{
 		if(i == ledIndex){
 			HAL_GPIO_WritePin(GPIOB,(1 << i),GPIO_PIN_RESET); //switches LED OFF
 		}
