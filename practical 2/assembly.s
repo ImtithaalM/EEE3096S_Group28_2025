@@ -36,24 +36,24 @@ ASM_Main:
 
 main_loop:
 
-    @ Reading button inputs (GPIOA -> IDR) ---
+    @ Reading button inputs (GPIOA -> IDR)
     LDR  R0, GPIOA_BASE
     LDR  R6, [R0, #0x10]       @ R6 = input state
 
-    @ -------- SW2 (PA2): force 0xAA while held --------
+    @ SW2 (PA2): force 0xAA while held
     MOVS R7, #4
     TST  R6, R7
-    BNE  check_sw3             @ not pressed -> check SW3
+    BNE  check_sw3             @ when not pressed -> check SW3
     MOVS R2, #0xAA             @ show 0xAA
     STR  R2, [R1, #0x14]
 wait_sw2_release:
     LDR  R6, [R0, #0x10]
     MOVS R7, #4
     TST  R6, R7
-    BEQ  wait_sw2_release      @ keep showing 0xAA until released
+    BEQ  wait_sw2_release      @ keeps showing 0xAA until released
     B    main_loop
 
-    @ -------- SW3 (PA3): freeze while held --------
+    @ SW3 (PA3): freeze while held
 check_sw3:
     MOVS R7, #8
     TST  R6, R7
@@ -66,7 +66,7 @@ freeze_loop:
     BEQ  freeze_loop           @ wait until released
     B    main_loop
 
-    @ -------- SW0 (PA0): adjust increment step --------
+    @ SW0 (PA0): adjust increment step
 check_sw0_sw1:
     MOVS R7, #1
     TST  R6, R7
@@ -77,7 +77,7 @@ sw0_pressed:
     MOVS R4, #2
 after_sw0:
 
-    @ -------- SW1 (PA1): adjust delay --------
+    @ SW1 (PA1): adjust delay
     MOVS R7, #2
     TST  R6, R7
     BEQ  sw1_pressed
@@ -87,13 +87,13 @@ sw1_pressed:
     LDR  R5, SHORT_DELAY_CNT
 after_sw1:
 
-    @ -------- Delay loop --------
+    @ Delay loop
     MOV   R0, R5
 delay_loop:
     SUBS  R0, R0, #1
     BNE   delay_loop
 
-    @ -------- Increment LEDs --------
+    @ Increment LEDs
     ADDS  R2, R2, R4
     MOVS  R7, #0xFF
     ANDS  R2, R2, R7
@@ -108,14 +108,15 @@ write_leds:
 @ --------------------------
 @ Subroutine: check_buttons
 @ --------------------------
+
 check_buttons:
 	PUSH {R0-R7, LR}
 
-	@ Read inputs
+	@ Reading the inputs
 	LDR R0, GPIOA_BASE
 	LDR R6, [R0, #0x10]    @ IDR register
 
-	@ --- SW0: increment by 2 ---
+	@ SW0: increment by 2
 	MOVS R7, #1            @ mask = 0b0001
 	ANDS R7, R6, R7        @ test SW0
 	CMP R7, #0
@@ -124,7 +125,7 @@ check_buttons:
 	B check_sw1
 
 check_sw1:
-	@ --- SW1: short delay ---
+	@ SW1: short delay
 	MOVS R7, #2            @ mask = 0b0010
 	ANDS R7, R6, R7
 	CMP R7, #0
@@ -133,7 +134,7 @@ check_sw1:
 	B check_sw2
 
 check_sw2:
-	@ --- SW2: force 0xAA ---
+	@ SW2: force 0xAA
 	MOVS R7, #4            @ mask = 0b0100
 	ANDS R7, R6, R7
 	CMP R7, #0
@@ -173,6 +174,6 @@ MODER_OUTPUT: 		.word 0x5555
 @ LONG_DELAY_CNT: 	.word 0
 @ SHORT_DELAY_CNT: 	.word 0
 
-@ --- You must tune these counts experimentally ---
+@ Counts tuned experimentally
 LONG_DELAY_CNT: 	.word 500000     @ ≈0.7s
 SHORT_DELAY_CNT: 	.word 200000     @ ≈0.3s
