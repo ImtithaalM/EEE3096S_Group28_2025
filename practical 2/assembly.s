@@ -34,71 +34,72 @@ ASM_Main:
 
 @ TODO: Add code, labels and logic for button checks and LED patterns
 
+
 main_loop:
 
-    @ Reading button inputs (GPIOA -> IDR)
+    @ First read the pushbutton inputs from GPIOA (IDR register at offset 0x10)
     LDR  R0, GPIOA_BASE
-    LDR  R6, [R0, #0x10]       @ R6 = input state
+    LDR  R6, [R0, #0x10]       @ Save the current button states into R6
 
-    @ SW2 (PA2): force 0xAA while held
-    MOVS R7, #4
-    TST  R6, R7
-    BNE  check_sw3             @ when not pressed -> check SW3
-    MOVS R2, #0xAA             @ show 0xAA
-    STR  R2, [R1, #0x14]
+    @ SW2 (PA2): when pressed, force the LED pattern to 0xAA
+    MOVS R7, #4                @ Create a mask to isolate bit 2 (PA2)
+    TST  R6, R7                @ Test if SW2 is pressed (active low)
+    BNE  check_sw3             @ If not pressed, skip to SW3 check
+    MOVS R2, #0xAA             @ If pressed, load 0xAA into the LED register
+    STR  R2, [R1, #0x14]       @ Update the LED output to show 0xAA
 wait_sw2_release:
-    LDR  R6, [R0, #0x10]
-    MOVS R7, #4
-    TST  R6, R7
-    BEQ  wait_sw2_release      @ keeps showing 0xAA until released
-    B    main_loop
+    LDR  R6, [R0, #0x10]       @ Keep checking the input state
+    MOVS R7, #4                @ Mask again for SW2
+    TST  R6, R7                @ Check if SW2 is still being pressed
+    BEQ  wait_sw2_release      @ Stay in this loop until button is released
+    B    main_loop             @ Once released, return to the start of main loop
 
-    @ SW3 (PA3): freeze while held
+    @ SW3 (PA3): when pressed, freeze the LEDs at their current state
 check_sw3:
-    MOVS R7, #8
-    TST  R6, R7
-    BNE  check_sw0_sw1
-
+    MOVS R7, #8                @ Mask for bit 3 (PA3)
+    TST  R6, R7                @ Check if SW3 is pressed
+    BNE  check_sw0_sw1         @ If not pressed, continue to SW0/SW1 checks
 freeze_loop:
-    LDR  R6, [R0, #0x10]
-    MOVS R7, #8
-    TST  R6, R7
-    BEQ  freeze_loop           @ wait until released
-    B    main_loop
+    LDR  R6, [R0, #0x10]       @ Keep reading button inputs
+    MOVS R7, #8                @ Mask for SW3
+    TST  R6, R7                @ Test again
+    BEQ  freeze_loop           @ Stay here until the button is released
+    B    main_loop             @ When released, go back to main loop
 
-    @ SW0 (PA0): adjust increment step
+    @ SW0 (PA0): change step size of increment
 check_sw0_sw1:
-    MOVS R7, #1
-    TST  R6, R7
-    BEQ  sw0_pressed
-    MOVS R4, #1
+    MOVS R7, #1                @ Mask for bit 0 (PA0)
+    TST  R6, R7                @ Test if SW0 is pressed
+    BEQ  sw0_pressed           @ If pressed, branch to handler
+    MOVS R4, #1                @ If not pressed, step = 1
     B    after_sw0
 sw0_pressed:
-    MOVS R4, #2
+    MOVS R4, #2                @ If pressed, step = 2
 after_sw0:
 
-    @ SW1 (PA1): adjust delay
-    MOVS R7, #2
-    TST  R6, R7
-    BEQ  sw1_pressed
-    LDR  R5, LONG_DELAY_CNT
+    @ SW1 (PA1): change timing delay
+    MOVS R7, #2                @ Mask for bit 1 (PA1)
+    TST  R6, R7                @ Test if SW1 is pressed
+    BEQ  sw1_pressed           @ If pressed, use short delay
+    LDR  R5, LONG_DELAY_CNT    @ If not pressed, use long delay (~0.7s)
     B    after_sw1
 sw1_pressed:
-    LDR  R5, SHORT_DELAY_CNT
+    LDR  R5, SHORT_DELAY_CNT   @ If pressed, use short delay (~0.3s)
 after_sw1:
 
-    @ Delay loop
-    MOV   R0, R5
+    @ Delay loop: waste cycles to create time delay
+    MOV   R0, R5               @ Copy delay count into R0
 delay_loop:
-    SUBS  R0, R0, #1
-    BNE   delay_loop
+    SUBS  R0, R0, #1           @ Subtract 1 each cycle
+    BNE   delay_loop           @ Loop until R0 reaches zero
 
-    @ Increment LEDs
-    ADDS  R2, R2, R4
-    MOVS  R7, #0xFF
-    ANDS  R2, R2, R7
-    STR   R2, [R1, #0x14]
-    B     main_loop
+    @ Normal LED incrementing behaviour
+    ADDS  R2, R2, R4           @ Increment LED value by step (R4 = 1 or 2)
+    MOVS  R7, #0xFF            @ Prepare mask to keep only lower 8 bits
+    ANDS  R2, R2, R7           @ Mask so LEDs wrap around after 255
+    STR   R2, [R1, #0x14]      @ Write new value to LEDs
+    B     main_loop            @ Repeat forever
+
 
 write_leds:
 
@@ -175,5 +176,5 @@ MODER_OUTPUT: 		.word 0x5555
 @ SHORT_DELAY_CNT: 	.word 0
 
 @ Counts tuned experimentally
-LONG_DELAY_CNT: 	.word 500000     @ ≈0.7s
-SHORT_DELAY_CNT: 	.word 200000     @ ≈0.3s
+LONG_DELAY_CNT: 	.word 1400000     @ Approximately ≈0.7s
+SHORT_DELAY_CNT: 	.word 600000     @ Approximately ≈0.3s
