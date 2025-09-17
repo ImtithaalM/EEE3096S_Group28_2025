@@ -86,6 +86,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 uint64_t calculate_mandelbrot_fixed_point_arithmetic(int width, int height, int max_iterations);
 uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations);
+uint64_t calculate_mandelbrot_float(int width, int height, int max_iterations);
 /* USER CODE BEGIN PFP */
 //TODO: Define any function prototypes you might need such as the calculate Mandelbrot function among others
 
@@ -141,7 +142,7 @@ int main(void)
   		  start_time = HAL_GetTick();
 
   		  //TODO: Call the Mandelbrot Function and store the output in the checksum variable defined initially
-  		  checksum[i] = calculate_mandelbrot_double(width[i], height[i], MAX_ITER);
+  		  checksum[i] = calculate_mandelbrot_float(width[i], height[i], MAX_ITER);
   		  //checksum[i] = calculate_mandelbrot_double(width[i], height[i], max_iters);
 
   		  //TODO: Record the end time
@@ -302,6 +303,30 @@ uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations){
     return mandelbrot_sum;
 }
 
+// Mandelbrot using variable type float
+uint64_t calculate_mandelbrot_float(int width, int height, int max_iterations) {
+    uint64_t mandelbrot_sum = 0;
+    float x0, y0, xi, yi, temp;
+    int iteration;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            x0 = ((float)x / (float)width) * 3.5f - 2.5f;
+            y0 = ((float)y / (float)height) * 2.0f - 1.0f;
+            xi = 0.0f;
+            yi = 0.0f;
+            iteration = 0;
+            while ((iteration < max_iterations) && (xi*xi + yi*yi <= 4.0f)) {
+                temp = xi*xi - yi*yi;
+                yi = 2.0f*xi*yi + y0;
+                xi = temp + x0;
+                iteration++;
+            }
+            mandelbrot_sum += iteration;
+        }
+    }
+    return mandelbrot_sum;
+}
 
 
 /* USER CODE END 4 */
