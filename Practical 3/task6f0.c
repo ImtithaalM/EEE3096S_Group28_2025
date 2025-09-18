@@ -1,8 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file : main.c
-  * @brief : Main program body
+  * @file           : main.c
+  * @brief          : Main program body
   ******************************************************************************
   * @attention
   *
@@ -18,13 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include "stm32f0xx.h"
 #include "stm32f0xx_hal.h"
 #include "stm32f0xx_hal_rcc.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,7 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MAX_ITER 100
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,10 +44,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
+/*TASK6*/
 /* USER CODE BEGIN PV */
 //TODO: Define variables you think you might need
 // - Performance timing variables (e.g execution time, throughput, pixels per second, clock cycles)
+#define MAX_ITER 100
 volatile uint32_t start_time = 0;
 volatile uint32_t end_time = 0;
 volatile uint32_t execution_time;
@@ -54,6 +56,7 @@ volatile uint64_t checksum[5];
 
 uint64_t width[5] = {128, 160, 192, 224, 256};
 uint64_t height[5] = {128, 160, 192, 224, 256};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,7 +65,6 @@ static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 //TODO: Define any function prototypes you might need such as the calculate Mandelbrot function among others
 uint64_t calculate_mandelbrot_fixed_point_arithmetic(int width, int height, int max_iterations);
-uint64_t calculate_mandelbrot_fixed_point_split(int width, int height, int first_row, int last_row, int max_iterations);
 uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations);
 /* USER CODE END PFP */
 
@@ -72,7 +74,7 @@ uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations);
 /* USER CODE END 0 */
 
 /**
-  * @brief The application entry point.
+  * @brief  The application entry point.
   * @retval int
   */
 int main(void)
@@ -107,41 +109,40 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
+   {
+     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-   start_time = HAL_GetTick();
+     /* USER CODE BEGIN 3 */
+    start_time = HAL_GetTick();
 
-    for (int i =0; i<5;i++){
-     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+     for (int i =0; i<5;i++){
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
 
-     //TODO: Call the Mandelbrot Function and store the output in the checksum variable defined initially
+      //TODO: Call the Mandelbrot Function and store the output in the checksum variable defined initially
 
-     checksum[i] = calculate_mandelbrot_fixed_point_arithmetic(width[i], height[i], MAX_ITER);
-     //checksum[i] = calculate_mandelbrot_double(width[i], height[i], max_iters);
+      checksum[i] = calculate_mandelbrot_fixed_point_arithmetic(width[i], height[i], MAX_ITER);
+      //checksum[i] = calculate_mandelbrot_double(width[i], height[i], max_iters);
 
 
-     //TODO: Turn on LED 1 to signify the end of the operation
-     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+      //TODO: Turn on LED 1 to signify the end of the operation
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
 
-     //TODO: Hold the LEDs on for a 1s delay
-     HAL_Delay(1000);
+      //TODO: Hold the LEDs on for a 1s delay
+      HAL_Delay(1000);
 
-     //TODO: Turn off the LEDs
-     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+      //TODO: Turn off the LEDs
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+     }
+     //TODO: Record the end time
+     end_time = HAL_GetTick();
+
+     //TODO: Calculate the execution time
+     execution_time = end_time - start_time;
     }
-    //TODO: Record the end time
-    end_time = HAL_GetTick();
-
-    //TODO: Calculate the execution time
-    execution_time = end_time - start_time;
-   }
-
-  /* USER CODE END 3 */
-
 }
+
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -151,23 +152,16 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 15;
-  RCC_OscInitStruct.PLL.PLLN = 144;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  RCC_OscInitStruct.PLL.PLLR = 2;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
+  RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -176,13 +170,12 @@ void SystemClock_Config(void)
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+                              |RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -201,9 +194,9 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
@@ -225,61 +218,42 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 //TODO: Function signatures you defined previously , implement them here
-uint64_t calculate_mandelbrot_fixed_point_arithmetic(int width, int height, int max_iterations){
-  uint64_t mandelbrot_sum = 0;
+//TODO: Mandelbroat using variable type integers and fixed point arithmetic
 
-  int16_t sFactor = 1000;
+uint64_t calculate_mandelbrot_fixed_point_arithmetic(int width, int height, int max_iterations) {
 
-  int16_t x0, y0, xi, yi, temp;
-    int iteration;
-    for (int y = 0; y < height; y++) {
-     for (int x = 0; x < width; x++) {
-      x0 = (x*sFactor / width) * 3.5 - 2.5*sFactor;
-      y0 = (y*sFactor / height) * 2 - 1*sFactor;
-      xi= 0;
-      yi = 0;
-      iteration = 0;
-      while ((iteration < max_iterations) && (xi*xi + yi*yi <= 4*sFactor*sFactor)) {
-       temp = (xi*xi - yi*yi)/sFactor;
-       yi = (2*xi*yi)/sFactor + y0;
-       xi = temp + x0;
-       iteration = iteration + 1;
-      }
-      mandelbrot_sum = mandelbrot_sum + iteration;
-     }
+    //define local variables for fixed point arithmetic
+    uint64_t mandelbrot_checksum = 0;
+    int32_t scale_factor = 1000;
+    int16_t x0;
+    int16_t y0;
+    int16_t xi;
+    int16_t yi;
+    int16_t iteration;
+    int16_t xi_temp;
+
+    for (int y = 0; y <= height - 1; y++) {
+        for (int x = 0; x <= width - 1; x++) {
+            x0 = (x * scale_factor / width) * 35 / 10 - 25 * scale_factor / 10;
+            y0 = (y * scale_factor / height) * 2 - scale_factor;
+
+            xi = 0;
+            yi = 0;
+            iteration = 0;
+
+            while ((iteration < max_iterations) && (xi * xi + yi * yi <= 4 * scale_factor * scale_factor)) {
+                xi_temp = (xi * xi - yi * yi) / scale_factor;
+                yi = (2 * xi * yi) / scale_factor + y0;
+                xi = xi_temp + x0;
+                ++iteration;
+            }
+
+            mandelbrot_checksum += iteration;
+        }
     }
-    return mandelbrot_sum;
-
+    return mandelbrot_checksum;
 }
 
-//Split Mandelbroat using variable type integers and fixed point arithmetic
-uint64_t calculate_mandelbrot_fixed_point_split(int width, int height, int first_row, int last_row, int max_iterations){
-  uint64_t mandelbrot_sum = 0;
-
-  int16_t sFactor = 1000;
-
-  int16_t x0, y0, xi, yi, temp;
-  int iteration;
-
-    for (int y = first_row; y < last_row; y++) {
-     for (int x = 0; x < width; x++) {
-      x0 = (x*sFactor / width) * 3.5 - 2.5*sFactor;
-      y0 = (y*sFactor / height) * 2 - 1*sFactor;
-      xi= 0;
-      yi = 0;
-      iteration = 0;
-      while ((iteration < max_iterations) && (xi*xi + yi*yi <= 4*sFactor*sFactor)) {
-       temp = (xi*xi - yi*yi)/sFactor;
-       yi = (2*xi*yi)/sFactor + y0;
-       xi = temp + x0;
-       iteration = iteration + 1;
-      }
-      mandelbrot_sum = mandelbrot_sum + iteration;
-     }
-    }
-    return mandelbrot_sum;
-
-}
 
 //TODO: Mandelbroat using variable type double
 uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations){
@@ -302,10 +276,12 @@ uint64_t calculate_mandelbrot_double(int width, int height, int max_iterations){
     }
     return mandelbrot_sum;
 }
+
+
 /* USER CODE END 4 */
 
 /**
-  * @brief This function is executed in case of error occurrence.
+  * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
 void Error_Handler(void)
@@ -320,10 +296,10 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief Reports the name of the source file and the source line number
-  * where the assert_param error has occurred.
-  * @param file: pointer to the source file name
-  * @param line: assert_param error line source number
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
@@ -334,3 +310,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
